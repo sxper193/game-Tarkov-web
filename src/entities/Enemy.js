@@ -9,6 +9,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         scene.physics.add.existing(this);
 
         this.setCollideWorldBounds(true);
+        this.body.setSize(32, 16); // Extremely squashed body
+        this.body.setOffset(0, 64); // Align body with visual "feet"
         this.speed = 100;
         this.target = null;
         this.lastAttackTime = 0;
@@ -25,10 +27,50 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         if (distance < 400) {
             // Chase
-            this.scene.physics.moveToObject(this, this.target, this.speed);
-            this.setRotation(Phaser.Math.Angle.Between(this.x, this.y, this.target.x, this.target.y));
+            // Basic direction to target
+            let angle = Phaser.Math.Angle.Between(this.x, this.y, this.target.x, this.target.y);
 
-            // Shoot if close enough
+            // OBSTACLE AVOIDANCE (Steering)
+            const lookAhead = 50;
+            const leftRay = new Phaser.Geom.Line(this.x, this.y, this.x + Math.cos(angle - 0.5) * lookAhead, this.y + Math.sin(angle - 0.5) * lookAhead);
+            const rightRay = new Phaser.Geom.Line(this.x, this.y, this.x + Math.cos(angle + 0.5) * lookAhead, this.y + Math.sin(angle + 0.5) * lookAhead);
+            const centerRay = new Phaser.Geom.Line(this.x, this.y, this.x + Math.cos(angle) * lookAhead, this.y + Math.sin(angle) * lookAhead);
+
+            let avoidanceForce = 0;
+            const walls = this.scene.walls.getChildren();
+
+            // Simple raycast check against wall bounds
+            for (let wall of walls) {
+                const bounds = wall.getBounds();
+                if (Phaser.Geom.Intersects.LineToRectangle(leftRay, bounds)) {
+                    avoidanceForce += 0.5; // Steer right
+                }
+                if (Phaser.Geom.Intersects.LineToRectangle(rightRay, bounds)) {
+                    avoidanceForce -= 0.5; // Steer left
+                }
+                if (Phaser.Geom.Intersects.LineToRectangle(centerRay, bounds)) {
+                    avoidanceForce += (Math.random() > 0.5 ? 1 : -1); // Steer random
+                }
+            }
+
+            angle += avoidanceForce;
+
+            // DODGE LOGIC
+            // Check if player is aiming at me
+            const playerAngle = this.target.rotation;
+            const angleToEnemy = Phaser.Math.Angle.Between(this.target.x, this.target.y, this.x, this.y);
+            const angleDiff = Phaser.Math.Angle.Wrap(playerAngle - angleToEnemy);
+
+            if (Math.abs(angleDiff) < 0.2 && distance < 250 && Math.random() < 0.02) {
+                // Player is aiming at me! Dodge!
+                angle += (Math.random() > 0.5 ? 1.5 : -1.5); // Dash side
+            }
+
+            // Apply velocity
+            this.scene.physics.velocityFromRotation(angle, this.speed, this.body.velocity);
+            this.setRotation(angle);
+
+            // Shoot if close enough (and roughly facing target)
             if (distance < 300) {
                 this.shoot();
             }

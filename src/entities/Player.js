@@ -8,6 +8,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         scene.physics.add.existing(this);
 
         this.setCollideWorldBounds(true);
+        this.body.setSize(32, 16); // Extremely squashed body for low angle
+        this.body.setOffset(0, 64); // Align body with visual "feet" (80 - 16 = 64)
 
         // Movement speed
         this.speed = 200;
