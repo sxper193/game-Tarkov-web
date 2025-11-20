@@ -3,6 +3,7 @@ import GameScene from './scenes/GameScene';
 import InventoryScene from './scenes/InventoryScene';
 import MainMenuScene from './scenes/MainMenuScene';
 import GameOverScene from './scenes/GameOverScene';
+import UIScene from './scenes/UIScene';
 
 const config = {
   type: Phaser.AUTO,
@@ -16,7 +17,8 @@ const config = {
       debug: false // Disable debug for production feel
     }
   },
-  scene: [MainMenuScene, GameScene, InventoryScene, GameOverScene]
+  lights: { enable: true }, // Enable lights for Light2D pipeline
+  scene: [MainMenuScene, GameScene, InventoryScene, GameOverScene, UIScene]
 };
 
 const game = new Phaser.Game(config);

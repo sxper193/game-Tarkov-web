@@ -35,7 +35,13 @@ export default class GameOverScene extends Phaser.Scene {
 
         restartBtn.on('pointerover', () => restartBtn.setStyle({ backgroundColor: '#cccccc' }));
         restartBtn.on('pointerout', () => restartBtn.setStyle({ backgroundColor: '#ffffff' }));
-        restartBtn.on('pointerdown', () => this.scene.start('GameScene'));
+        restartBtn.on('pointerdown', () => {
+            // Stop all scenes and restart GameScene from scratch
+            this.scene.stop('GameOverScene');
+            this.scene.stop('UIScene');
+            this.scene.stop('GameScene');
+            this.scene.start('GameScene');
+        });
 
         // Main Menu Button
         const menuBtn = this.add.text(width / 2, height / 2 + 100, 'MAIN MENU', {
